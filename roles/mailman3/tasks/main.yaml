@@ -1,0 +1,11 @@
+---
+
+- import_task: docker.yaml
+
+- import_tasks: postfix.yaml
+
+- import_tasks: fetchmail.yaml
+
+- import_task: mailman3.yaml
+
+...

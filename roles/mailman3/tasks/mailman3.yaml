@@ -1,0 +1,49 @@
+---
+
+- name: Make Mailman3 directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ mailman3_app_dir }}"
+    - "{{ mailman3_app_dir }}/env"
+    - "{{ mailman3_app_dir }}/core"
+    - "{{ mailman3_app_dir }}/web"
+    - "{{ mailman3_app_dir }}/database"
+    - "{{ mailman3_app_dir }}/nginx"
+    - "{{ mailman3_app_dir }}/nginx/include"
+    - "{{ mailman3_app_dir }}/nginx/conf.d"
+
+- name: Render Mailman3 env
+  template:
+    src: "env/{{ item }}.j2"
+    dest: "{{ mailman3_app_dir }}/env/{{ item }}"
+    owner: root
+  loop:
+    - mailman-core.env
+    - mailman-web.env
+    - postgres.env
+
+- name: Render nginx conf
+  template:
+    src: nginx.conf
+    dest: "{{ mailman3_app_dir }}/nginx/nginx.conf"
+    mode: 0444
+    owner: root
+    group: root
+  notify: "Reload docker nginx"
+
+- name: Render mailman3 nginx static
+  template:
+    src: "nginx_mailman.conf.j2"
+    dest: "{{ mailman3_app_dir }}/nginx/conf.d/mailman3.conf"
+    owner: root
+  notify: "Reload docker nginx"
+
+- name: Render Mailman3 docker-compose
+  template:
+    src: "docker-compose.yaml.j2"
+    dest: "{{ mailman3_app_dir }}/docker-compose.yaml"
+    owner: root
+
+...

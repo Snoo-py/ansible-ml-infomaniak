@@ -1,0 +1,6 @@
+# Nginx configuration
+# This have to be in var in order to override nginx role defaults
+nginx_directory: "{{ mailman3_app_dir }}/nginx/"
+nginx_service: false
+nginx_user: "nginx"
+

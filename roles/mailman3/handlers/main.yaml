@@ -1,0 +1,13 @@
+---
+
+- name: restart postfix
+  service:
+    name: postfix
+    state: restarted
+
+- name: restart fetchmail
+  service:
+    name: fetchmail
+    state: restarted
+
+...

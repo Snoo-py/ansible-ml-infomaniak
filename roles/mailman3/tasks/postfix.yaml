@@ -1,0 +1,28 @@
+---
+
+- name: Install Postfix
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - postfix
+      - libsasl2-modules
+
+- name: Render postfix main.cf
+  template:
+    src: postfix/main.cf.j2
+    dest: /etc/postfix/main.cf
+  notify: restart postfix
+
+- name: postfix sasl configuration
+  template:
+    src: postfix/sasl_passwd.j2
+    dest: /etc/postfix/sasl_passwd
+  register: sasl_passwd
+
+- name: gen sasl postfix map
+  command: postmap /etc/postfix/sasl_passwd
+  when: sasl_passwd.changed
+
+...

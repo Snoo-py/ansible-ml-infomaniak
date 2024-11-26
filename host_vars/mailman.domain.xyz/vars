@@ -1,0 +1,13 @@
+---
+
+mailman3_domain: "domain.xyz"
+mailman3_admin_email: "test@test.com"
+mailman3_acme_email: "contact@domain.xyz"
+
+mailman3_mail_password: "MY_SUPER_MAIL_PASSWORD"
+
+mailman3_database_password: "MY_SUPER_SECRET_DB_PASSWORD"
+mailman3_api_key: "MY_SUPER_SECRET_API_KEY"
+mailman3_web_secret_key: "MY_SUPER_WEB_SECRET_KEY"
+
+...

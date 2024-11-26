@@ -1,0 +1,8 @@
+set daemon 300
+set syslog
+
+poll {{ mailman3_postfix_relayhost }} localdomains {{ mailman3_domain }} with proto IMAP
+  envelope Delivered-To
+  user '{{ mailman3_mail_account }}' there with password '{{ mailman3_mail_password }}'
+  to * here
+  idle fetchall ssl

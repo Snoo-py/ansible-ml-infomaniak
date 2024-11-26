@@ -1,0 +1,27 @@
+---
+
+mailman3_app_dir: "/opt/mailman3/"
+
+mailman3_domain: "DOMAIN.COM"
+
+mailman3_traefik_version: "v3.2"
+mailman3_nginx_version: "latest"
+mailman3_mailman_core_version: "0.4"  # Use a specific version tag (tag latest is not published)
+mailman3_mailman_web_version: "0.4"  # Use a specific version tag (tag latest is not published)
+mailman3_postgres_version: "12-alpine"
+
+mailman3_vhost: "mailman.{{ mailman3_domain }}"
+mailman3_acme_email: "test@test.com"
+
+mailman3_admin_user: "admin"
+mailman3_admin_email: "test@test.test"
+
+mailman3_web_secret_key: "CHANGEME"
+mailman3_database_password: "CHANGEME"
+mailman3_api_key: "CHANGEME"
+
+mailman3_postfix_relayhost: ""
+mailman3_mail_account: "mailman@{{ mailman3_domain }}"
+mailman3_mail_password: ""
+
+...

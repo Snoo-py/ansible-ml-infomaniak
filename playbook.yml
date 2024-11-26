@@ -1,0 +1,7 @@
+---
+
+- hosts: mailman.domain.xyz
+  roles:
+    - role: mailman3
+
+...

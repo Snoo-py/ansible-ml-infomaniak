@@ -1,0 +1,21 @@
+---
+
+- name: Install Fetchmail
+  apt:
+    name: fetchmail
+    state: present
+
+- name: activate fetchmail
+  lineinfile:
+    path: /etc/default/fetchmail
+    line: "START_DAEMON=yes"
+    regexp: "^START_DAEMON=.*"
+  notify: restart fetchmail
+
+- name: fetchmail configuration
+  template:
+    src: fetchmail/fetchmailrc.j2
+    dest: /etc/fetchmailrc
+  notify: restart fetchmail
+
+...

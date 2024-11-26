@@ -1,0 +1,92 @@
+services:
+  traefik:
+    image: traefik:{{ mailman3_traefik_version }}
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    command:
+      - "--accesslog=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entryPoints.web.http.redirections.entryPoint.priority=1000"
+      - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesResolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesResolvers.letsencrypt.acme.email={{ mailman3_acme_email }}"
+      - "--certificatesResolvers.letsencrypt.acme.tlschallenge=true"
+
+  nginx:
+    image: "nginx:{{ mailman3_nginx_version }}"
+    restart: "unless-stopped"
+    volumes:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - {{ mailman3_app_dir | regex_replace("/$") }}/nginx/include:/etc/nginx/include:ro
+      - {{ mailman3_app_dir | regex_replace("/$") }}/nginx//conf.d:/etc/nginx/conf.d:ro
+      - {{ mailman3_app_dir | regex_replace("/$") }}/web/static/:/var/www:ro
+    labels:
+      - "traefik.enable=True"
+      - "traefik.http.services.nginx.loadbalancer.server.port=80"
+      - "traefik.http.routers.nginx.rule=Host(`{{ mailman3_vhost }}`) && PathPrefix(`/static`)"
+      - "traefik.http.routers.nginx.entrypoints=websecure"
+      - "traefik.http.routers.nginx.service=nginx"
+      - "traefik.http.routers.nginx.tls.certResolver=letsencrypt"
+
+  mailman-core:
+    image: maxking/mailman-core:{{ mailman3_mailman_core_version }}
+    container_name: mailman-core
+    hostname: mailman-core
+    restart: unless-stopped
+    stop_grace_period: 30s
+    volumes:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/core:/opt/mailman/
+    links:
+      - database:database
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/env/mailman-core.env
+    ports:
+      - "127.0.0.1:8001:8001" # API
+      - "127.0.0.1:8024:8024" # LMTP - incoming emails
+
+  mailman-web:
+    image: maxking/mailman-web:{{ mailman3_mailman_web_version }}
+    container_name: mailman-web
+    hostname: mailman-web
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    links:
+      - mailman-core:mailman-core
+      - database:database
+    volumes:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/web:/opt/mailman-web-data
+    env_file:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/env/mailman-web.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.mailman-web.loadbalancer.server.port=8000"
+      - "traefik.http.routers.mailman-web.rule=Host(`{{ mailman3_vhost }}`)"
+      - "traefik.http.routers.mailman-web.entrypoints=websecure"
+      - "traefik.http.routers.mailman-web.service=mailman-web"
+      - "traefik.http.routers.mailman-web.tls.certResolver=letsencrypt"
+
+  database:
+    image: postgres:{{ mailman3_postgres_version }}
+    volumes:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/database:/var/lib/postgresql/data
+    env_file:
+      - {{ mailman3_app_dir | regex_replace("/$") }}/env/postgres.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --dbname mailmandb --username mailman"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

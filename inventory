@@ -1,0 +1,2 @@
+
+mailman.domain.xyz ansible_user=debian ansible_become=true
